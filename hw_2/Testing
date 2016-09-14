@@ -1,0 +1,224 @@
+data = flowers
+colors = colours
+
+# -------- Create the figure and axes ------------ #
+ndim = data.shape[1] # No. of features
+fig, axes = plt.subplots(ndim, ndim)
+
+# -------- Initialize Object's variables --------- #
+loc0 = None
+loc1 = None
+xy0 = None
+xy1 = None
+ax0 = None
+rect = None
+ax_dict = {} # dictionary to store the axis keys
+ax_data = {} # dictionary to store the axis data
+
+for x, xstat in enumerate(data.columns):
+    for y, ystat in enumerate(data.columns):
+
+        # get the axis, and save the column names that
+        # correspond to it
+        ax = axes[y, x]
+        ax_dict[str(ax)] = (xstat, ystat)
+        # plot the data and save it for later in ax_data
+        ax_data[x, y]= ax.scatter(
+                data[xstat], data[ystat])
+
+        # set the axis limits iand ticks
+        ax.set_xlim(data[xstat].min(), data[xstat].max())
+        ax.set_ylim(data[ystat].min(), data[ystat].max())
+        ax.xaxis.set_ticks([])
+        ax.yaxis.set_ticks([])
+
+        # plot a label on the diagonal plots
+        if xstat == ystat:
+            ax.text(0.1, 0.85, xstat, transform=ax.transAxes)
+
+# --------------- Setup Colors of data ---------------- #
+update_colors()
+
+# --------------- Setup Figure Sizes ------------------ #
+fig.set_figwidth(10)
+fig.set_figheight(10)
+
+# --------------- Draw figures ----------------- #
+fig.show()
+flush()
+
+# Registering MPL events and saving IDs
+cids = {}
+cids['button_press_event'] = fig.canvas.mpl_connect('button_press_event', press)
+cids['button_release_event'] = fig.canvas.mpl_connect('button_release_event', release)
+#cids['key_press_event'] = fig.canvas.mpl_connect('key_press_event', clear)
+#cids['button_release_callback'] = fig.canvas.mpl_connect('button_release_callback', button_release_callback)
+cids['key_press_event'] = fig.canvas.mpl_connect('key_press_event', on_key)
+
+def on_key(event):
+    print('you pressed', event.key, event.xdata, event.ydata)
+
+
+
+def update_colors(self, pick = None):
+    """ Description:
+        Update colors of the points in all subplots;
+        Non-selected Points are turned to gray when pick is not None
+
+        Parameter:
+        pick: boolean numpy.ndarray
+              Points which are false are set to gray
+    """
+    # update colors
+    colors = colors.copy()
+    if pick is not None:
+         colors[~pick] = (0, 0, 0, 0.1)
+
+    # set the colors for each axis
+    for (x, y), data in ax_data.items():
+        data.set_color(colors)
+
+def flush(self):
+    """
+    Desciption:
+    Flush std out and draw canvas - to make sure everything is written right now
+    """
+    sys.stdout.flush()
+    fig.canvas.draw()
+
+def press(self, event):
+    """
+    Description (Handler):
+    Mouse Button Press Event
+    """
+    # ------ Handling misses --------#
+    # If there's a selection already/misses: Don't do anything
+    if xy0 or (event.inaxes is None):
+        return
+
+    # save global mouse location, the axis coordinates, and axis objects
+    loc0 = (event.x, event.y)
+    xy0 = (event.xdata, event.ydata)
+    ax0 = event.inaxes
+
+    # create a new rectangle patch and add it to the axis
+    rect = mpatches.Rectangle(xy0, 0, 0, color = 'k', alpha = 0.1)
+    ax0.add_patch(rect)
+
+    flush()
+
+def release(self, event):
+    """
+    Description (Handler):
+    Mouse Button Release Event
+    """
+    # ------ Handling misses and non-selections --------#
+    # If there's a selection already/misses: Don't do anything
+    if xy1 or (xy0 is None) or (event.inaxes is None):
+        return
+
+    # save global mouse location, the axis coordinates, and axis objects
+    loc1 = (event.x, event.y)
+    xy1 = (event.xdata, event.ydata)
+
+    if ax0 != event.inaxes:
+        print("Warning: INVALID SELECTON/MISS")
+    else:
+        width = xy1[0] -xy0[0]
+        height = xy1[1] - xy0[1]
+        area = np.abs(width * height)
+        if area < 0.001:
+            reset_fig()
+        else:
+            # Update the wifth and heigh of rectangle of selection
+            rect.set_width(width)
+            rect.set_height(height)
+            # Picking points we want to highlight in all subplots
+            pick_points()
+
+    flush()
+
+
+
+def reset_fig(self):
+    """
+    Description:
+    Reset the selected area once mouse is released
+    """
+    # ------- Removing selection --------- #
+    if rect:
+        rect.remove()
+        rect = None
+
+    update_colors()
+
+    loc0 = None
+    xy0 = None
+    ax0 = None
+    loc1 = None
+    xy1 = None
+
+    flush()
+
+def clear(self, event):
+    """
+    Description:
+    Reset the selected area once mouse is released
+    """
+    print('you pressed', event.key, event.xdata, event.ydata)
+
+    if event.key != "d":
+        return
+    if (loc0 is None) or (loc1 is None):
+        return
+
+    # Determine if the mouse was inside the selection
+    xy = np.array([loc0, loc1]).T
+    xmin = xy[0].min()
+    xmax = xy[0].max()
+    ymin = xy[1].min()
+    ymax = xy[1].max()
+    inregion = ((event.x > xmin) and (event.x < xmax) and (event.y > ymin) and (event.y < ymax))
+
+    # If is was selected, then rest the point
+    if inregion:
+        reset_fig()
+        flush()
+
+    flush()
+
+def button_release_callback(self, event):
+    'whenever a mouse button is released'
+    if not showverts:
+        return
+    if event.button != 1:
+        return
+    _ind = None
+
+
+def pick_points(self):
+    """Choose the points that are in the selection and update their
+    colors."""
+
+
+    # get the bounds of the selection
+    xy = np.array([xy0, xy1]).T
+    xmin = xy[0].min()
+    xmax = xy[0].max()
+    ymin = xy[1].min()
+    ymax = xy[1].max()
+
+    # get the data corresponding to the subplot we've made the
+    # selection in
+    xstat, ystat = ax_dict[str(ax0)]
+    xdata = np.asarray(data[xstat])
+    ydata = np.asarray(data[ystat])
+
+    # determine which points to pick
+    pick = ((xdata > xmin) &
+            (xdata < xmax) &
+            (ydata > ymin) &
+            (ydata < ymax))
+
+    # update the colors
+    update_colors(pick=pick)
