@@ -1,0 +1,20 @@
+<!-- extend from base layout -->
+{% extends "base.html"%}
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+{% block content %}
+  <h1> Query </h1>
+  <form action="" method="post" name="Query">
+    {{ form.hidden_tag() }}
+    <p> Please enter your query: <br>
+      {{form.query(size=80) }} <br>
+    </p>
+    <p><input type="submit" value="Submit Query"></p>
+  <h1> Upload </h1>
+  <form method="post" enctype=multipart/form-data action="" name="uploader">
+  {{ form.hidden_tag() }}
+  <p> Please select the file to upload: <br>
+    <input type = "file" name = "file" /><br>
+    <br><input type="submit" value="Upload BibTex"><br>
+  </p>
+</form>
+{% endblock %}

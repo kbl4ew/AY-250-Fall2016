@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <title>{{title}} - BibTex Viewer  </title>
+  </head>
+  <body>
+    {% block content %}{% endblock %}
+    {% if db_empty %}
+    <h1> No database present, one has to be created for you
+    {% else %}
+    <h1> A database is present. Please insert a new collection by uploading a BibTex file with the form below
+    {% endif %}
+  </body>
+</html>
