@@ -8,12 +8,12 @@ from werkzeug import secure_filename
 @app.route('/index')
 def index():
     form = QueryForm()
-    return render_template('Query.html', title = 'Home', db_empty=False)
-    
-#@app.route('/query', methods=['GET', 'POST'])
-#def query():
-#    form = QueryForm()
-#s    return render_template('Query.html', title = 'Home', db_empty=False, form=form)
+    return render_template('Query.html', title = 'Home', db_empty=False, form = form)
+
+@app.route('/index', methods=['GET', 'POST'])
+def query():
+    form = QueryForm()
+    return render_template('Query.html', title = 'Home', db_empty=False, form=form)
 
 @app.route('/query', methods = ['GET', 'POST'])
 def upload_file():
@@ -22,7 +22,6 @@ def upload_file():
     #  f.save(secure_filename(f.filename))
     #  return 'file uploaded successfully'
     form = QueryForm()
-    render_template('Query.html', title = 'Home', db_empty=False, form=form)
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -39,12 +38,13 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('uploaded_file',
                                     filename=filename))
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form action="" method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-    '''
+    return render_template('Query.html', title = 'Home', db_empty=False, form=form)
+    #return '''
+    #<!doctype html>
+    #<title>Upload new File</title>
+    #<h1>Upload new File</h1>
+    #<form action="" method=post enctype=multipart/form-data>
+    #  <p><input type=file name=file>
+    #<input type=submit value=Upload>
+    #</form>
+    #'''
